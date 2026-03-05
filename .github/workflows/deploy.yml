@@ -17,10 +17,10 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             set -e
-            cd /var/www/myapp
+            cd /var/www/sander-tf
             git fetch --tags --force
             git checkout ${{ github.event.release.tag_name }}
             # build/installeer (pas aan op jouw stack)
             npm ci
             npm run build
-            pm2 reload myapp || pm2 start npm --name myapp -- start
+            pm2 reload sander-tf || pm2 start npm --name sander-tf -- start
