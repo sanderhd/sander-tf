@@ -1,0 +1,26 @@
+name: Deploy on Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd /var/www/myapp
+            git fetch --tags --force
+            git checkout ${{ github.event.release.tag_name }}
+            # build/installeer (pas aan op jouw stack)
+            npm ci
+            npm run build
+            pm2 reload myapp || pm2 start npm --name myapp -- start
