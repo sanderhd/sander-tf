@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 type BlogPost = {
   id: string;
@@ -103,9 +104,12 @@ export default function Home() {
                     </p>
 
                     <div className="mt-4">
-                      <button className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
+                      <Link
+                        href={`/blog/${p.id}`}
+                        className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+                      >
                         Read more
-                      </button>
+                      </Link>
                     </div>
                   </motion.article>
               ))}
