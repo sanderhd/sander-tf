@@ -55,7 +55,7 @@ export default function Home() {
               transition={{ delay: 0.3, duration: 0.6 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => (window.location.href = '/blogs')}
+              onClick={() => (window.location.href = '/blog')}
               className="group inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-900 px-5 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
             >
               <span>Blogs</span>

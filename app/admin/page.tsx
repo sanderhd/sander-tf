@@ -1,9 +1,16 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useState } from "react"
 import AdminBlogForm from "./AdminBlogForm";
+import AdminBlogList from "./AdminBlogList";
 
 export default function AdminPage() {
+    const [refreshToken, setRefreshtoken] = useState(0);
+
+    function reloadBlogs() {
+        setRefreshtoken((v) => v + 1);
+    }
     return (
         <main className="relative isolate flex min-h-screen items0center justify-center overflow-hidden px-4 py-10">
             <div className="pointer-events-none absolute inset-0 overflow-hidden bg-white dark:bg-gray-950">
@@ -38,7 +45,8 @@ export default function AdminPage() {
                         </p>
 
                         <div className="mt-8">
-                            <AdminBlogForm />
+                            <AdminBlogForm onChanged={reloadBlogs} />
+                            <AdminBlogList refreshToken={refreshToken} onChanged={reloadBlogs} />
                         </div>
                 </motion.div>
             </section>

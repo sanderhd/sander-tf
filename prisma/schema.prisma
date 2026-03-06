@@ -22,7 +22,10 @@ model User {
 model Blog {
   id        String   @id @default(cuid())
   title     String
+  slug      String?  @unique
   content   String?
+  summary   String?
+  thumbnail String?
   published Boolean  @default(true)
   createdAt DateTime @default(now())
 }
