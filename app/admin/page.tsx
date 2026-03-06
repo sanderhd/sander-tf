@@ -45,7 +45,7 @@ export default function AdminPage() {
                         </p>
 
                         <div className="mt-8">
-                            <AdminBlogForm onChanged={reloadBlogs} />
+                            <AdminBlogForm onCreated={reloadBlogs} />
                             <AdminBlogList refreshToken={refreshToken} onChanged={reloadBlogs} />
                         </div>
                 </motion.div>
