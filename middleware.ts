@@ -1,16 +1,14 @@
-import { withAuth } from "next-auth/middleware";
+import { NextRequest, NextResponse } from "next/server";
 
-export default withAuth(function middleware() {
-  return;
-}, {
-  secret:
-    process.env.NEXTAUTH_SECRET && process.env.NEXTAUTH_SECRET.trim().length > 0
-      ? process.env.NEXTAUTH_SECRET
-      : "local-dev-secret-change-me",
-  pages: {
-    signIn: "/login",
-  },
-});
+export function middleware(request: NextRequest) {
+  const session = request.cookies.get("admin_session");
+
+  if (!session || session.value !== "authenticated") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/admin/:path*", "/api/admin/:path*"],

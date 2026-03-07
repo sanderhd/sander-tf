@@ -1,15 +1,12 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
 export default function LoginPage() {
 	const router = useRouter();
-	const callbackUrl = "/admin";
 
-	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -19,22 +16,27 @@ export default function LoginPage() {
 		setLoading(true);
 		setError(null);
 
-		const result = await signIn("credentials", {
-			email,
-			password,
-			redirect: false,
-			callbackUrl,
-		});
+		try {
+			const response = await fetch("/api/login", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ password }),
+			});
 
-		setLoading(false);
+			const data = await response.json();
 
-		if (!result || result.error) {
-			setError("Inloggen mislukt. Controleer je gegevens.");
-			return;
+			if (!response.ok) {
+				setError("Inloggen mislukt. Controleer je wachtwoord.");
+				setLoading(false);
+				return;
+			}
+
+			router.push("/admin");
+			router.refresh();
+		} catch (err) {
+			setError("Er is een fout opgetreden. Probeer het opnieuw.");
+			setLoading(false);
 		}
-
-		router.push(result.url ?? callbackUrl);
-		router.refresh();
 	}
 
 	return (
@@ -64,26 +66,12 @@ export default function LoginPage() {
 					className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8 dark:border-slate-800 dark:bg-slate-900/75"
 				>
 					<h1 className="font-mono text-3xl tracking-tight text-gray-900 dark:text-white">Login</h1>
-					<p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Log in to access the admin panel.</p>
+					<p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Voer het admin wachtwoord in.</p>
 
 					<form onSubmit={onSubmit} className="mt-8 space-y-4">
 						<div>
-							<label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
-								Email
-							</label>
-							<input
-								id="email"
-								type="email"
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								required
-								className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition placeholder:text-slate-400 focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100"
-							/>
-						</div>
-
-						<div>
 							<label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
-								Password
+								Wachtwoord
 							</label>
 							<input
 								id="password"

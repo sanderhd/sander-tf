@@ -1,53 +1,39 @@
 // lib/auth.ts
-import type { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 
-const resolvedSecret =
-  process.env.NEXTAUTH_SECRET && process.env.NEXTAUTH_SECRET.trim().length > 0
-    ? process.env.NEXTAUTH_SECRET
-    : process.env.NODE_ENV !== "production"
-      ? "local-dev-secret-change-me"
-      : undefined;
+const SESSION_COOKIE_NAME = "admin_session";
+const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
-export const authOptions: NextAuthOptions = {
-  secret: resolvedSecret,
-  session: { strategy: "jwt" },
-  providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const email = String(credentials?.email ?? "");
-        const password = String(credentials?.password ?? "");
+export async function verifyAdminPassword(password: string): Promise<boolean> {
+  const admin = await prisma.user.findFirst({
+    where: { role: "ADMIN" },
+  });
 
-        if (!email || !password) return null;
+  if (!admin) return false;
 
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return null;
+  return bcrypt.compare(password, admin.passwordHash);
+}
 
-        const ok = await bcrypt.compare(password, user.passwordHash);
-        if (!ok) return null;
+export async function createSession() {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, "authenticated", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: SESSION_MAX_AGE,
+    path: "/",
+  });
+}
 
-        return { id: user.id, email: user.email, role: user.role };
-      },
-    }),
-  ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) token.role = (user as { role?: string }).role;
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        (session.user as { role?: string }).role = token.role as string | undefined;
-      }
-      return session;
-    },
-  },
-  pages: { signIn: "/login" },
-};
+export async function destroySession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE_NAME);
+}
+
+export async function isAuthenticated(): Promise<boolean> {
+  const cookieStore = await cookies();
+  const session = cookieStore.get(SESSION_COOKIE_NAME);
+  return session?.value === "authenticated";
+}
