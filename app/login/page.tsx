@@ -26,7 +26,7 @@ export default function LoginPage() {
 			const data = await response.json();
 
 			if (!response.ok) {
-				setError("Inloggen mislukt. Controleer je wachtwoord.");
+				setError("Login failed: " + (data.error || "Unknown error"));
 				setLoading(false);
 				return;
 			}
@@ -34,7 +34,7 @@ export default function LoginPage() {
 			router.push("/admin");
 			router.refresh();
 		} catch (err) {
-			setError("Er is een fout opgetreden. Probeer het opnieuw.");
+			setError("An error occurred. Please try again.");
 			setLoading(false);
 		}
 	}
@@ -66,12 +66,12 @@ export default function LoginPage() {
 					className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8 dark:border-slate-800 dark:bg-slate-900/75"
 				>
 					<h1 className="font-mono text-3xl tracking-tight text-gray-900 dark:text-white">Login</h1>
-					<p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Voer het admin wachtwoord in.</p>
+					<p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Enter your password to log in.</p>
 
 					<form onSubmit={onSubmit} className="mt-8 space-y-4">
 						<div>
 							<label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
-								Wachtwoord
+								Password
 							</label>
 							<input
 								id="password"
