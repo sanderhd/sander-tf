@@ -1,13 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 function normalizeSlug(value: string): string {
   return value.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
 async function requireAdmin() {
-  const isAdmin = true;
-  if (!isAdmin) return new Response("Unauthorized", { status: 403 });
+  const session = await getServerSession(authOptions);
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  if (!session?.user || role !== "ADMIN") {
+    return new Response("Unauthorized", { status: 403 });
+  }
   return null;
 }
 

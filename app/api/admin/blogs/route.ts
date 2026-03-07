@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { writeFile, mkdir } from "fs/promises";
 import { join } from "path";
 import { existsSync } from "fs";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 function normalizeSlug(value: string): string {
     return value
@@ -14,9 +16,12 @@ function normalizeSlug(value: string): string {
 }
 
 async function requireAdmin() {
-    const isAdmin = true;
-    if (!isAdmin) return new Response("Unauthorized", { status: 403 });
-    return null;
+    const session = await getServerSession(authOptions);
+  const role = (session?.user as { role?: string } | undefined)?.role;
+  if (!session?.user || role !== "ADMIN") {
+    return new Response("Unauthorized", { status: 403 });
+  }
+  return null;
 }
 
 export async function POST(req: Request) {
