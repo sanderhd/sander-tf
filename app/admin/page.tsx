@@ -1,55 +1,85 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useState } from "react"
-import AdminBlogForm from "./AdminBlogForm";
-import AdminBlogList from "./AdminBlogList";
+import Link from "next/link";
+import AdminNav from "@/components/admin/AdminNav";
+import { FileText, FolderKanban, BarChart3 } from "lucide-react";
 
-export default function AdminPage() {
-    const [refreshToken, setRefreshtoken] = useState(0);
+export default function AdminDashboard() {
+    const quickActions = [
+        { 
+            href: "/admin/blogs", 
+            label: "Manage Blogs", 
+            icon: FileText,
+            description: "Create and edit blog posts",
+        },
+        { 
+            href: "/admin/projects", 
+            label: "Manage Projects", 
+            icon: FolderKanban,
+            description: "Coming soon",
+            disabled: true
+        },
+        { 
+            href: "/admin/analytics", 
+            label: "View Analytics", 
+            icon: BarChart3,
+            description: "Coming soon",
+            disabled: true
+        },
+    ];
 
-    function reloadBlogs() {
-        setRefreshtoken((v) => v + 1);
-    }
     return (
-        <main className="relative isolate flex min-h-screen items0center justify-center overflow-hidden px-4 py-10">
-            <div className="pointer-events-none absolute inset-0 overflow-hidden bg-white dark:bg-gray-950">
-                <div className="absolute inset-0 bg-linear-to-br from-gray-50 via-slate-50 to-gray-100 dark:from-gray-900 dark:via-slate-900 dark:to-gray-950" />
-                <div className="absolute -right-24 -top-24 h-80 w-80 rounded-full bg-blue-200/40 blur-3xl dark:bg-blue-800/20" />
-                <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-indigo-200/35 blur-3xl dark:bg-indigo-800/20" />
+        <motion.div
+            initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8 dark:border-slate-800 dark:bg-slate-900/75"
+        >
+            <h1 className="font-mono text-3xl tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+                Admin Dashboard
+            </h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                Manage your content and view analytics.
+            </p>
 
-                <div className="absolute inset-0 opacity-55 dark:opacity-40">
-                <svg width="100%" height="100%" className="text-slate-500 dark:text-slate-500">
-                    <pattern id="tech-pattern-admin" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
-                    <circle cx="18" cy="18" r="1.5" fill="currentColor" />
-                    </pattern>
-                    <rect width="100%" height="100%" fill="url(#tech-pattern-admin)" />
-                </svg>
+            <div className="mt-8">
+                <AdminNav />
+
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {quickActions.map((action, index) => {
+                        const Icon = action.icon;
+                        return (
+                            <motion.div
+                                key={action.href}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 * index, duration: 0.4 }}
+                            >
+                                <Link
+                                    href={action.disabled ? "#" : action.href}
+                                    className={`
+                                        group block rounded-xl border p-5 transition
+                                        ${action.disabled 
+                                            ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-50 dark:border-slate-800 dark:bg-slate-900" 
+                                            : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm dark:border-slate-700 dark:bg-slate-800/50 dark:hover:border-slate-600"
+                                        }
+                                    `}
+                                    onClick={(e) => action.disabled && e.preventDefault()}
+                                >
+                                    <Icon className="h-5 w-5 text-slate-600 transition group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-slate-200" />
+                                    <h3 className="mt-3 font-medium text-slate-900 dark:text-white">
+                                        {action.label}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                        {action.description}
+                                    </p>
+                                </Link>
+                            </motion.div>
+                        );
+                    })}
                 </div>
-
-                <div className="absolute bottom-0 right-0 h-1/2 w-full bg-linear-to-t from-blue-100/30 to-transparent dark:from-blue-900/15 dark:to-transparent" />
             </div>
-
-            <section className="relative z-10 w-full max-w-3xl">
-                <motion.div 
-                    initial={{ opacity: 0, y: 24, filter: "blur(6px)"}}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                    className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8 dark:border-slate-800 dark:bg-slate-900/75"
-                    >
-                        <h1 className="font-mono text-3xl tracking-tight text-gray-900 sm:text04xl dark:text-white">
-                            Admin Panel
-                        </h1>
-                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                            Create & publish new blog posts.
-                        </p>
-
-                        <div className="mt-8">
-                            <AdminBlogForm onCreated={reloadBlogs} />
-                            <AdminBlogList refreshToken={refreshToken} onChanged={reloadBlogs} />
-                        </div>
-                </motion.div>
-            </section>
-        </main>
-    )
+        </motion.div>
+    );
 }

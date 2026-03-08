@@ -65,3 +65,30 @@ export async function PATCH(
     return new Response("Internal server error", { status: 500 });
   }
 }
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const forbidden = await requireAdmin();
+  if (forbidden) return forbidden;
+
+  const { id } = await params;
+
+  const blog = await prisma.blog.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      summary: true,
+      content: true,
+      published: true,
+      thumbnail: true,
+      createdAt: true,
+    },
+  });
+
+  if (!blog) return new Response("Not found", { status: 404 });
+  return Response.json(blog);
+}
