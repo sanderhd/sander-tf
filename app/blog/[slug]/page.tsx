@@ -4,12 +4,48 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma"
 import Link from "next/link";
 import { ArrowBigLeftDash } from "lucide-react";
+import { Metadata } from "next";
 
 type BlogPageProps = {
     params: Promise<{
         slug: string;
     }>;
 };
+
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+    const { slug } = await params;
+    const blog = await prisma.blog.findFirst({
+        where: { slug, published: true },
+    });
+
+    if (!blog) {
+        return { title: "Blog not found" };
+    }
+
+    const description = blog.summary || blog.content?.slice(0, 160) || "";
+
+    return {
+        title: blog.title,
+        description,
+        openGraph: {
+            title: blog.title,
+            description,
+            images: blog.thumbnail ? [{ url: blog.thumbnail }] : [],
+            type: "article",
+            publishedTime: blog.createdAt.toISOString(),
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: blog.title,
+            description,
+            images: blog.thumbnail ? [blog.thumbnail] : [],
+        },
+    };
+}
 
 export default async function BlogDetailPage({ params }: BlogPageProps) {
     const { slug } = await params;

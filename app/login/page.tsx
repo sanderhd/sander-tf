@@ -3,10 +3,11 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function LoginPage() {
 	const router = useRouter();
-
+	const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -16,11 +17,17 @@ export default function LoginPage() {
 		setLoading(true);
 		setError(null);
 
+		if(!turnstileToken) {
+			setError("Please complete the captcha.");
+			setLoading(false);
+			return;
+		}
+
 		try {
 			const response = await fetch("/api/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ password }),
+				body: JSON.stringify({ password, turnstileToken }),
 			});
 
 			const data = await response.json();
@@ -84,7 +91,22 @@ export default function LoginPage() {
 						</div>
 
 						{error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
-
+						
+						<div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
+							<Turnstile
+								className="mx-auto"
+								siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+								options={{
+									size: "flexible",
+									theme: "auto",
+									appearance: "interaction-only",
+								}}
+								onSuccess={(token) => setTurnstileToken(token)}
+								onExpire={() => setTurnstileToken(null)}
+								onError={() => setTurnstileToken(null)}
+							/>
+						</div>
+					
 						<motion.button
 							type="submit"
 							disabled={loading}

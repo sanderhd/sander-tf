@@ -11,6 +11,7 @@
     "reset-admin-password": "tsx scripts/reset-admin-password.ts"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.4.2",
     "@prisma/client": "^6.19.2",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.35.0",

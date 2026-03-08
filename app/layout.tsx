@@ -14,7 +14,24 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "sander.tf",
-  description: "sander.tf",
+  description: "This is my personal website! Explore my projects, blogs, and more.",
+  keywords: ["blog", "projects"],
+
+  openGraph: {
+    title: "sander.tf",
+    description: "This is my personal website! Explore my projects, blogs, and more.",
+    url: "https://sander.tf/",
+    siteName: "sander.tf",
+    images: [{ url: "https://sander.tf/sander-tf.png" }],
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "sander.tf",
+    description: "This is my personal website! Explore my projects, blogs, and more.",
+    images: ["https://sander.tf/sander-tf.png"]
+  },
 };
 
 export default function RootLayout({
