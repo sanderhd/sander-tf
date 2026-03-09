@@ -13,6 +13,7 @@
   "dependencies": {
     "@marsidev/react-turnstile": "^1.4.2",
     "@prisma/client": "^6.19.2",
+    "@uiw/react-md-editor": "^4.0.11",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.35.0",
     "lucide-react": "^0.577.0",

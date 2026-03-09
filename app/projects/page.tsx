@@ -1,9 +1,41 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+type ProjectPost = {
+  id: string;
+  title: string;
+  slug: string;
+  content: string | null;
+  summary: string | null;
+  thumbnail: string | null;
+  published: boolean;
+  createdAt: Date;
+};
 
 export default function Home() {
+  const [projects, setProjects] = useState<ProjectPost[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPosts() {
+      const res = await fetch("/api/projects", { cache: "no-store" });
+      if (!res.ok || !isMounted) return;
+
+      const data = (await res.json()) as ProjectPost[];
+      setProjects(data);
+    }
+
+    loadPosts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="relative isolate flex min-h-screen items-center justify-center overflow-hidden">
       <div className="pointer-events-none absolute inset-0 overflow-hidden bg-white dark:bg-gray-950">
@@ -35,10 +67,65 @@ export default function Home() {
           initial={{ opacity: 0, y: 24, filter: "blur(6px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="font-mono text-5xl tracking-tight text-gray-900 select-none sm:text-7xl md:text-8xl lg:text-9xl dark:text-white">
+          className="font-mono text-4xl tracking-tight text-gray-900 select-none sm:text-6xl md:text-7xl lg:text-8xl dark:text-white">
+            projects
+        </motion.h1>
 
-              sander.tf
-          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.6 }}
+            className="mt-4 max-w-2xl text-sm text-slate-600 dark:text-slate-300 sm:text-base"
+            >
+              Thoughts, experiments and logs.
+            </motion.p>
+
+          {projects.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25, duration: 0.5 }}
+              className="mt-10 rounded-2xl border border-slate-200/700 bg-white/70 p-6 text-slate-700 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/40 dark:text-slate-200"
+            >
+              No projects posted.
+            </motion.div>
+          ) : (
+            <div className="mt-10 grid grid-cols-1 gap-4 sm:gap-5">
+              {projects.map((p, i) => (
+                <Link key={p.id} href={`/projects/${p.slug}`} className="block">
+                <motion.article
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 * i, duration: 0.5 }}
+                  className="group rounded-2xl border border-slate-200/70 bg-white/70 p-5 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700/70 dark:bg-slate-900/40 overflow-hidden cursor-pointer"
+                  >
+                    {p.thumbnail && (
+                      <img 
+                        src={p.thumbnail} 
+                        alt={p.title}
+                        className="w-full h-48 object-cover rounded-lg mb-4"
+                      />
+                    )}
+                    <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                      {p.title}
+                    </h2>
+
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                      {p.summary ?? "No summary available."}
+                    </p>
+
+                    <div className="mt-4">
+                      <span
+                        className="inline-flex items-center rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition group-hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200 dark:group-hover:bg-slate-800"
+                      >
+                        Read more
+                      </span>
+                    </div>
+                  </motion.article>
+                </Link>
+              ))}
+              </div>
+          )}
       </div>
     </div>
   );

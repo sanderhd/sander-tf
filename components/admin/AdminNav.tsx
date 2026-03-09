@@ -10,7 +10,7 @@ export default function AdminNav() {
     const navItems = [
         { href: "/admin", label: "Dashboard", icon: BarChart3 },
         { href: "/admin/blogs", label: "Blogs", icon: FileText },
-        { href: "/admin/projects", label: "Projects", icon: FolderKanban, disabled: true },
+        { href: "/admin/projects", label: "Projects", icon: FolderKanban },
         { href: "/admin/analytics", label: "Analytics", icon: BarChart3, disabled: true }
     ];
 

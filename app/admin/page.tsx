@@ -17,8 +17,7 @@ export default function AdminDashboard() {
             href: "/admin/projects", 
             label: "Manage Projects", 
             icon: FolderKanban,
-            description: "Coming soon",
-            disabled: true
+            description: "Create and edit projects",
         },
         { 
             href: "/admin/analytics", 
