@@ -1,5 +1,3 @@
-import { unlink } from "fs/promises";
-import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { isAuthenticated } from "@/lib/auth";
@@ -101,11 +99,7 @@ export async function DELETE(
   const { id } = await params;
 
   try {
-    const project = await prisma.project.findUnique({ where: { id }, select: { thumbnail: true } });
     await prisma.project.delete({ where: { id } });
-    if (project?.thumbnail) {
-      await unlink(join(process.cwd(), "public", project.thumbnail)).catch(() => {});
-    }
     return new Response(null, { status: 204 });
   } catch {
     return new Response("Not found", { status: 404 });

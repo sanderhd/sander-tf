@@ -27,23 +27,9 @@ export default function EditProjectForm({ project }: { project: Project }) {
     const [summary, setSummary] = useState(project.summary ?? "");
     const [content, setContent] = useState(project.content ?? "");
     const [published, setPublished] = useState(project.published);
-    const [newThumbnailFile, setNewThumbnailFile] = useState<File | null>(null);
-    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(project.thumbnail ?? null);
+    const [thumbnailUrl, setThumbnailUrl] = useState(project.thumbnail ?? "");
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
-
-    function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage("Thumbnail must be under 5MB");
-            return;
-        }
-        setNewThumbnailFile(file);
-        const reader = new FileReader();
-        reader.onloadend = () => setThumbnailPreview(reader.result as string);
-        reader.readAsDataURL(file);
-    }
 
     const uploadImageCommand: ICommand = {
         name: "upload-image",
@@ -73,26 +59,12 @@ export default function EditProjectForm({ project }: { project: Project }) {
         setSaving(true);
         setMessage(null);
 
-        let thumbnailUrl: string | undefined;
-        if (newThumbnailFile) {
-            const fd = new FormData();
-            fd.append("file", newThumbnailFile);
-            const uploadRes = await fetch("/api/admin/upload", { method: "POST", body: fd });
-            if (!uploadRes.ok) {
-                setMessage("Failed to upload thumbnail");
-                setSaving(false);
-                return;
-            }
-            const { url } = await uploadRes.json();
-            thumbnailUrl = url;
-        }
-
         const res = await fetch(`/api/admin/projects/${project.id}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 title, slug, summary, content, published,
-                ...(thumbnailUrl !== undefined && { thumbnail: thumbnailUrl }),
+                thumbnail: thumbnailUrl,
             }),
         });
 
@@ -116,14 +88,14 @@ export default function EditProjectForm({ project }: { project: Project }) {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.13, duration: 0.4 }}>
-                <label htmlFor="thumbnail" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Thumbnail</label>
-                {thumbnailPreview && (
+                <label htmlFor="thumbnail" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Thumbnail URL</label>
+                {thumbnailUrl && (
                     <div className="mb-3 rounded-xl overflow-hidden">
-                        <img src={thumbnailPreview} alt="Thumbnail" className="h-32 w-full object-cover rounded-xl" />
+                        <img src={thumbnailUrl} alt="Thumbnail" className="h-32 w-full object-cover rounded-xl" />
                     </div>
                 )}
-                <input id="thumbnail" type="file" accept="image/*" onChange={handleThumbnailChange}
-                    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100" />
+                <input id="thumbnail" type="url" value={thumbnailUrl} onChange={(e) => setThumbnailUrl(e.target.value)} placeholder="https://..."
+                    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition placeholder:text-slate-400 focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100" />
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }}>

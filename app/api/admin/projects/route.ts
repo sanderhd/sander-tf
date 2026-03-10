@@ -1,8 +1,5 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
 import { isAuthenticated } from "@/lib/auth";
 
 function normalizeSlug(value: string): string {
@@ -39,24 +36,7 @@ export async function POST(req: Request) {
             return new Response("Missing required fields", { status: 400 });
         }
 
-        let thumbnailPath: string | null = null;
-
-        if (thumbnailFile) {
-            const bytes = await thumbnailFile.arrayBuffer();
-            const buffer = Buffer.from(bytes);
-            
-            const uploadsDir = join(process.cwd(), "public", "thumbnails");
-            
-            if (!existsSync(uploadsDir)) {
-                await mkdir(uploadsDir, { recursive: true });
-            }
-
-            const filename = `${Date.now()}-${thumbnailFile.name.replace(/[^a-z0-9.-]/gi, "_").toLowerCase()}`;
-            const filepath = join(uploadsDir, filename);
-            
-            await writeFile(filepath, buffer);
-            thumbnailPath = `/thumbnails/${filename}`;
-        }
+        const thumbnailPath = (formData.get("thumbnail") as string | null)?.trim() || null;
 
         const baseSlug = normalizeSlug(slugInput || title);
 

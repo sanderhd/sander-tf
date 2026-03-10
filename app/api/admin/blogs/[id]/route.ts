@@ -1,5 +1,3 @@
-import { unlink } from "fs/promises";
-import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { isAuthenticated } from "@/lib/auth";
@@ -106,12 +104,8 @@ export async function DELETE(
 
   const { id } = await params;
 
-  try {
-    const blog = await prisma.blog.findUnique({ where: { id }, select: { thumbnail: true } });
+    try {
     await prisma.blog.delete({ where: { id } });
-    if (blog?.thumbnail) {
-      await unlink(join(process.cwd(), "public", blog.thumbnail)).catch(() => {});
-    }
     return new Response(null, { status: 204 });
   } catch {
     return new Response("Not found", { status: 404 });

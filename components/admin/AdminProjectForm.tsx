@@ -23,8 +23,7 @@ export default function AdminProjectForm({ onCreated }: AdminProjectFormProps) {
     const [slug, setSlug] = useState("");
     const [slugEdited, setSlugEdited] = useState(false);
     const [published, setPublished] = useState(true);
-    const [thumbnail, setThumbnail] = useState<File | null>(null);
-    const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+    const [thumbnailUrl, setThumbnailUrl] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
 
@@ -57,19 +56,6 @@ export default function AdminProjectForm({ onCreated }: AdminProjectFormProps) {
         },
     };
 
-    function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) {
-            setMessage("Thumbnail must be under 5MB");
-            return;
-        }
-        setThumbnail(file);
-        const reader = new FileReader();
-        reader.onloadend = () => setThumbnailPreview(reader.result as string);
-        reader.readAsDataURL(file);
-    }
-
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setIsSubmitting(true);
@@ -80,7 +66,7 @@ export default function AdminProjectForm({ onCreated }: AdminProjectFormProps) {
             formData.append("title", title);
             formData.append("content", content);
             formData.append("summary", summary);
-            if (thumbnail) formData.append("thumbnail", thumbnail);
+            if (thumbnailUrl.trim()) formData.append("thumbnail", thumbnailUrl.trim());
             formData.append("slug", slug);
             formData.append("published", String(published));
 
@@ -97,8 +83,7 @@ export default function AdminProjectForm({ onCreated }: AdminProjectFormProps) {
             setSlug("");
             setSlugEdited(false);
             setPublished(true);
-            setThumbnail(null);
-            setThumbnailPreview(null);
+            setThumbnailUrl("");
             setMessage("Project successfully saved!");
             onCreated?.();
         } catch {
@@ -123,17 +108,18 @@ export default function AdminProjectForm({ onCreated }: AdminProjectFormProps) {
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
-                <label htmlFor="thumbnail" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Thumbnail</label>
+                <label htmlFor="thumbnail" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Thumbnail URL</label>
                 <input
                     id="thumbnail"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleThumbnailChange}
-                    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100"
+                    type="url"
+                    value={thumbnailUrl}
+                    onChange={(e) => setThumbnailUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition placeholder:text-slate-400 focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100"
                 />
-                {thumbnailPreview && (
+                {thumbnailUrl && (
                     <div className="mt-3 rounded-xl overflow-hidden">
-                        <img src={thumbnailPreview} alt="Preview" className="h-32 w-full object-cover rounded-xl" />
+                        <img src={thumbnailUrl} alt="Preview" className="h-32 w-full object-cover rounded-xl" />
                     </div>
                 )}
             </motion.div>
