@@ -108,7 +108,7 @@ export default function Home() {
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-slate-400 dark:text-slate-500">
             <span className="inline-flex items-center gap-1.5">
               <MapPin size={13} />
-              Amsterdam, Netherlands
+              South Holland, Netherlands
             </span>
             <span className="inline-flex items-center gap-1.5 font-mono tabular-nums">
               <Clock size={13} />
