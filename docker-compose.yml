@@ -23,6 +23,8 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/sander-tf?schema=public
+      NEXT_PUBLIC_GIT_COMMIT: ${GIT_COMMIT:-dev}
+      NEXT_PUBLIC_BUILD_TIME: ${BUILD_TIME:-}
     ports:
       - "3000:3000"
     networks:

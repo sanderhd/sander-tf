@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const links = [
   { href: "/", label: "home" },
@@ -12,6 +13,19 @@ const links = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/status")
+      .then((r) => r.json())
+      .then((data) => setIsAdmin(data.isAdmin))
+      .catch(() => {});
+  }, []);
+
+  const allLinks = [
+    ...links,
+    ...(isAdmin ? [{ href: "/admin", label: "admin" }] : []),
+  ];
 
   return (
     <motion.nav
@@ -21,8 +35,8 @@ export default function Navbar() {
       className="fixed top-4 left-1/2 z-50 -translate-x-1/2"
     >
       <div className="flex items-center gap-1 rounded-full border border-slate-200/70 bg-white/70 px-3 py-2 shadow-lg backdrop-blur-xl dark:border-slate-700/70 dark:bg-slate-900/60">
-        {links.map(({ href, label }) => {
-          const active = pathname === href;
+        {allLinks.map(({ href, label }) => {
+          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
           return (
             <Link
               key={href}

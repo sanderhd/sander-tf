@@ -1,3 +1,5 @@
+import { unlink } from "fs/promises";
+import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { isAuthenticated } from "@/lib/auth";
@@ -20,6 +22,7 @@ type PatchBody = {
   slug?: string;
   summary?: string;
   content?: string;
+  thumbnail?: string;
 };
 
 export async function PATCH(
@@ -43,22 +46,17 @@ export async function PATCH(
     if (!normalized) return new Response("Invalid slug", { status: 400 });
     data.slug = normalized;
   }
+  if (typeof body.thumbnail === "string") data.thumbnail = body.thumbnail;
 
   if (Object.keys(data).length === 0) {
     return new Response("No valid fields", { status: 400 });
   }
 
   try {
-    const updated = await prisma.project.update({
-      where: { id },
-      data,
-    });
+    const updated = await prisma.project.update({ where: { id }, data });
     return Response.json(updated);
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
       return new Response("Slug already exists", { status: 409 });
     }
     console.error(error);
@@ -103,7 +101,11 @@ export async function DELETE(
   const { id } = await params;
 
   try {
+    const project = await prisma.project.findUnique({ where: { id }, select: { thumbnail: true } });
     await prisma.project.delete({ where: { id } });
+    if (project?.thumbnail) {
+      await unlink(join(process.cwd(), "public", project.thumbnail)).catch(() => {});
+    }
     return new Response(null, { status: 204 });
   } catch {
     return new Response("Not found", { status: 404 });

@@ -1,3 +1,5 @@
+import { unlink } from "fs/promises";
+import { join } from "path";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { isAuthenticated } from "@/lib/auth";
@@ -20,6 +22,7 @@ type PatchBody = {
   slug?: string;
   summary?: string;
   content?: string;
+  thumbnail?: string;
 };
 
 export async function PATCH(
@@ -43,6 +46,7 @@ export async function PATCH(
     if (!normalized) return new Response("Invalid slug", { status: 400 });
     data.slug = normalized;
   }
+  if (typeof body.thumbnail === "string") data.thumbnail = body.thumbnail;
 
   if (Object.keys(data).length === 0) {
     return new Response("No valid fields", { status: 400 });
@@ -91,4 +95,25 @@ export async function GET(
 
   if (!blog) return new Response("Not found", { status: 404 });
   return Response.json(blog);
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string}> }
+) {
+  const forbidden = await requireAdmin();
+  if (forbidden) return forbidden;
+
+  const { id } = await params;
+
+  try {
+    const blog = await prisma.blog.findUnique({ where: { id }, select: { thumbnail: true } });
+    await prisma.blog.delete({ where: { id } });
+    if (blog?.thumbnail) {
+      await unlink(join(process.cwd(), "public", blog.thumbnail)).catch(() => {});
+    }
+    return new Response(null, { status: 204 });
+  } catch {
+    return new Response("Not found", { status: 404 });
+  }
 }

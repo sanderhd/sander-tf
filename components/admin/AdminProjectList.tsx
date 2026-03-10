@@ -24,6 +24,8 @@ export default function AdminProjectList({ refreshToken, onChanged }: Props) {
   const [message, setMessage] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
 
   async function loadProjects() {
     setLoading(true);
@@ -62,17 +64,47 @@ export default function AdminProjectList({ refreshToken, onChanged }: Props) {
     onChanged?.();
   }
 
+  const filtered = projects
+    .filter((p) => filter === "all" || (filter === "published" ? p.published : !p.published))
+    .filter((p) => p.title.toLowerCase().includes(search.toLowerCase()));
+
   if (loading) return <p className="text-sm text-slate-500">Loading projects...</p>;
 
   return (
     <div className="space-y-3">
       <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Existing projects</h2>
+
+      <div className="flex flex-wrap gap-2">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search projects..."
+          className="rounded-lg border border-slate-200 bg-white/80 px-3 py-1.5 text-sm text-slate-900 outline-none ring-blue-300 transition placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100"
+        />
+        <div className="flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden text-sm">
+          {(["all", "published", "draft"] as const).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1.5 capitalize transition ${
+                filter === f
+                  ? "bg-slate-900 text-white dark:bg-slate-700"
+                  : "bg-white text-slate-600 hover:bg-slate-50 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:bg-slate-800"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {message && <p className="text-sm text-red-500">{message}</p>}
 
-      {projects.length === 0 ? (
-        <p className="text-sm text-slate-500">No projects yet.</p>
+      {filtered.length === 0 ? (
+        <p className="text-sm text-slate-500">No projects found.</p>
       ) : (
-        projects.map((project) => (
+        filtered.map((project) => (
           <div
             key={project.id}
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/60 px-4 py-3 backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/40"
