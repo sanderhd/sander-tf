@@ -23,8 +23,7 @@ type Meta = {
 };
 
 const stack = [
-  "TypeScript", "Next.js", "React", "Tailwind CSS",
-  "Prisma", "PostgreSQL", "Docker",
+  "HTML", "CSS", "Tailwind CSS", "Javascript", "Typescript", "Next.js", "PHP", "SQL", "Docker", "Linux"
 ];
 
 const socials = [
