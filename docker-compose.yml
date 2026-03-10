@@ -27,6 +27,8 @@ services:
       NEXT_PUBLIC_BUILD_TIME: ${BUILD_TIME:-}
     ports:
       - "3000:3000"
+    volumes:
+      - thumbnails:/app/public/thumbnails
     networks:
       - internal
 
