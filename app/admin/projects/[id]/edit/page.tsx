@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 import EditProjectForm from "./EditProjectForm";
 import AdminNav from "@/components/admin/AdminNav";
 
@@ -8,21 +8,14 @@ type Props = {
 };
 
 export default async function EditProjectPage({ params }: Props) {
+    const supabase = getSupabaseAdminClient();
     const { id } = await params;
 
-    const project = await prisma.project.findUnique({
-        where: { id },
-        select: {
-            id: true,
-            title: true,
-            slug: true,
-            summary: true,
-            content: true,
-            published: true,
-            thumbnail: true,
-            createdAt: true,
-        },
-    });
+    const { data: project } = await supabase
+        .from("Project")
+        .select("id,title,slug,summary,content,published,thumbnail,createdAt")
+        .eq("id", id)
+        .maybeSingle();
 
     if (!project) notFound();
 

@@ -1,15 +1,24 @@
 // lib/auth.ts
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 
 const SESSION_COOKIE_NAME = "admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
 export async function verifyAdminPassword(password: string): Promise<boolean> {
-  const admin = await prisma.user.findFirst({
-    where: { role: "ADMIN" },
-  });
+  const supabase = getSupabaseAdminClient();
+  const { data: admin, error } = await supabase
+    .from("User")
+    .select("passwordHash")
+    .eq("role", "ADMIN")
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to load admin user", error);
+    return false;
+  }
 
   if (!admin) return false;
 

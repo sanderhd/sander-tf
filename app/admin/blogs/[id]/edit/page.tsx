@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 import EditBlogForm from "./EditBlogForm";
 import AdminNav from "@/components/admin/AdminNav";
 
@@ -8,21 +8,14 @@ type Props = {
 };
 
 export default async function EditBlogPage({ params }: Props) {
+    const supabase = getSupabaseAdminClient();
     const { id } = await params;
 
-    const blog = await prisma.blog.findUnique({
-        where: { id },
-        select: {
-            id: true,
-            title: true,
-            slug: true,
-            summary: true,
-            content: true,
-            published: true,
-            thumbnail: true,
-            createdAt: true,
-        },
-    });
+    const { data: blog } = await supabase
+        .from("Blog")
+        .select("id,title,slug,summary,content,published,thumbnail,createdAt")
+        .eq("id", id)
+        .maybeSingle();
 
     if (!blog) notFound();
 

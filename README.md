@@ -2,20 +2,19 @@
 
 # sander.tf
 
-sander.tf is my new portfolio written in next.js with a postgresql db.
+sander.tf is my portfolio written in Next.js with Supabase as database backend.
 
 ### Tech Stack:
 - Next.JS
 - TailwindCSS
-- Prisma
-- PostgreSQL
+- Supabase
 
 ## Local Setup Guide
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- PostgreSQL
 - Git
+- A Supabase project
 
 ### Installation Steps
 
@@ -32,26 +31,22 @@ sander.tf is my new portfolio written in next.js with a postgresql db.
 
 3. **Configure environment variables**
     ```bash
-    cp .env.example .env.local
+    cp .env.local.example .env.local
     ```
-    Update `.env.local` with your PostgreSQL database URL:
+    Update `.env.local` with your Supabase credentials:
     ```
-    DATABASE_URL="postgresql://user:password@localhost:5432/sander_tf"
-    ```
-
-4. **Set up the database**
-    ```bash
-    npx prisma migrate dev
+    SUPABASE_URL="https://your-project-ref.supabase.co"
+    SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
     ```
 
-5. **Start the development server**
+4. **Start the development server**
     ```bash
     npm run dev
     ```
 
-6. **Open in browser**
+5. **Open in browser**
     Navigate to `http://localhost:3000`
 
 ### Troubleshooting
-- Ensure PostgreSQL is running before database setup
+- Ensure your Supabase URL and service role key are set correctly
 - Clear `.next` folder if you encounter build issues: `rm -rf .next`

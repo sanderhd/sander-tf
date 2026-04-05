@@ -1,19 +1,17 @@
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdminClient } from "@/lib/supabase";
 
 export async function GET() {
-    const projects = await prisma.project.findMany({
-        where: { published: true },
-        orderBy: { createdAt: "desc" },
-        select: {
-            id: true,
-            title: true,
-            slug: true,
-            content: true,
-            summary: true,
-            thumbnail: true,
-            published: true,
-            createdAt: true,
-        },
-    });
+    const supabase = getSupabaseAdminClient();
+    const { data: projects, error } = await supabase
+        .from("Project")
+        .select("id,title,slug,content,summary,thumbnail,published,createdAt")
+        .eq("published", true)
+        .order("createdAt", { ascending: false });
+
+    if (error) {
+        console.error("Failed to fetch projects", error);
+        return new Response("Internal server error", { status: 500 });
+    }
+
     return Response.json(projects);
 }

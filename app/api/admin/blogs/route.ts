@@ -1,6 +1,5 @@
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { isAuthenticated } from "@/lib/auth";
+import { getSupabaseAdminClient, isUniqueViolation } from "@/lib/supabase";
 
 function normalizeSlug(value: string): string {
     return value
@@ -22,6 +21,7 @@ async function requireAdmin() {
 export async function POST(req: Request) {
     const forbidden = await requireAdmin();
     if (forbidden) return forbidden;
+    const supabase = getSupabaseAdminClient();
 
     try {
         const formData = await req.formData();
@@ -47,32 +47,28 @@ export async function POST(req: Request) {
         for (let attempt = 0; attempt < 50; attempt++) {
             const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${attempt + 1}`;
 
-            try {
-                const blog = await prisma.blog.create({
-                    data: {
-                        title,
-                        slug: candidateSlug,
-                        content,
-                        summary,
-                        thumbnail: thumbnailPath,
-                        published,
-                    },
-                });
+            const { data: blog, error } = await supabase
+                .from("Blog")
+                .insert({
+                    title,
+                    slug: candidateSlug,
+                    content,
+                    summary,
+                    thumbnail: thumbnailPath,
+                    published,
+                })
+                .select("*")
+                .single();
 
+            if (!error) {
                 return Response.json(blog);
-            } catch (error) {
-                const isSlugCollision =
-                    error instanceof Prisma.PrismaClientKnownRequestError &&
-                    error.code === "P2002" &&
-                    Array.isArray(error.meta?.target) &&
-                    (error.meta.target as string[]).includes("slug");
-
-                if (isSlugCollision) {
-                    continue;
-                }
-
-                throw error;
             }
+
+            if (isUniqueViolation(error, "slug")) {
+                continue;
+            }
+
+            throw error;
         }
 
         return new Response("Could not generate unique slug", { status: 409 });
@@ -85,19 +81,17 @@ export async function POST(req: Request) {
 export async function GET() {
     const forbidden = await requireAdmin();
     if (forbidden) return forbidden;
+    const supabase = getSupabaseAdminClient();
 
-    const blogs = await prisma.blog.findMany({
-        orderBy: { createdAt: "desc" },
-        select: {
-            id: true,
-            title: true,
-            slug: true,
-            summary: true,
-            published: true,
-            createdAt: true,
-            thumbnail: true,
-        },
-    });
+    const { data: blogs, error } = await supabase
+        .from("Blog")
+        .select("id,title,slug,summary,published,createdAt,thumbnail")
+        .order("createdAt", { ascending: false });
+
+    if (error) {
+        console.error("Failed to fetch admin blogs", error);
+        return new Response("Internal server error", { status: 500 });
+    }
 
     return Response.json(blogs);
 }

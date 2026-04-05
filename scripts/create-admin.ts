@@ -1,16 +1,21 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { getSupabaseAdminClient } from "../lib/supabase";
 
 async function createAdmin() {
   try {
+    const supabase = getSupabaseAdminClient();
     const password = process.env.ADMIN_PASSWORD || "admin123";
     const email = process.env.ADMIN_EMAIL || "admin@localhost";
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const { data: existingUser, error: existingUserError } = await supabase
+      .from("User")
+      .select("id,email,role")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (existingUserError) {
+      throw existingUserError;
+    }
 
     if (existingUser) {
       if (existingUser.role === "ADMIN") {
@@ -23,13 +28,19 @@ async function createAdmin() {
         
         const passwordHash = await bcrypt.hash(password, 10);
         
-        const admin = await prisma.user.update({
-          where: { email },
-          data: {
+        const { data: admin, error: updateError } = await supabase
+          .from("User")
+          .update({
             passwordHash,
             role: "ADMIN",
-          },
-        });
+          })
+          .eq("email", email)
+          .select("id,email")
+          .single();
+
+        if (updateError || !admin) {
+          throw updateError ?? new Error("Failed to update admin");
+        }
 
         console.log("✅ User updated to ADMIN successfully!");
         console.log("   ID:", admin.id);
@@ -46,13 +57,19 @@ async function createAdmin() {
     
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const admin = await prisma.user.create({
-      data: {
+    const { data: admin, error: createError } = await supabase
+      .from("User")
+      .insert({
         email,
         passwordHash,
         role: "ADMIN",
-      },
-    });
+      })
+      .select("id,email")
+      .single();
+
+    if (createError || !admin) {
+      throw createError ?? new Error("Failed to create admin");
+    }
 
     console.log("✅ Admin user created successfully!");
     console.log("   ID:", admin.id);
@@ -62,8 +79,6 @@ async function createAdmin() {
     console.log("⚠️  Bewaar dit wachtwoord veilig!");
   } catch (error) {
     console.error("❌ Error creating admin:", error);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 

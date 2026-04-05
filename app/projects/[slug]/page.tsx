@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma"
+import { getSupabaseAdminClient } from "@/lib/supabase";
 import Link from "next/link";
 import { ArrowBigLeftDash } from "lucide-react";
 import { Metadata } from "next";
@@ -17,10 +17,14 @@ export async function generateMetadata({
 }: {
     params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+    const supabase = getSupabaseAdminClient();
     const { slug } = await params;
-    const project = await prisma.project.findFirst({
-        where: { slug, published: true },
-    });
+    const { data: project } = await supabase
+        .from("Project")
+        .select("title,summary,content,thumbnail,createdAt")
+        .eq("slug", slug)
+        .eq("published", true)
+        .maybeSingle();
 
     if (!project) {
         return { title: "Project not found" };
@@ -36,7 +40,7 @@ export async function generateMetadata({
             description,
             images: project.thumbnail ? [{ url: project.thumbnail }] : [],
             type: "article",
-            publishedTime: project.createdAt.toISOString(),
+            publishedTime: new Date(project.createdAt).toISOString(),
         },
         twitter: {
             card: "summary_large_image",
@@ -48,14 +52,15 @@ export async function generateMetadata({
 }
 
 export default async function ProjectDetailPage({ params }: ProjectPageProps) {
+    const supabase = getSupabaseAdminClient();
     const { slug } = await params;
 
-    const project = await prisma.project.findFirst({
-        where: {
-            slug,
-            published: true,
-        },
-    });
+    const { data: project } = await supabase
+        .from("Project")
+        .select("*")
+        .eq("slug", slug)
+        .eq("published", true)
+        .maybeSingle();
 
     if (!project) {
         notFound();

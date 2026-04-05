@@ -1,6 +1,6 @@
-import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { isAuthenticated } from "@/lib/auth";
+import type { Database } from "@/lib/database.types";
+import { getSupabaseAdminClient, isUniqueViolation } from "@/lib/supabase";
 
 function normalizeSlug(value: string): string {
   return value.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
@@ -23,17 +23,20 @@ type PatchBody = {
   thumbnail?: string;
 };
 
+type ProjectUpdate = Database["public"]["Tables"]["Project"]["Update"];
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const forbidden = await requireAdmin();
   if (forbidden) return forbidden;
+  const supabase = getSupabaseAdminClient();
 
   const { id } = await params;
   const body = (await req.json()) as PatchBody;
 
-  const data: Prisma.ProjectUpdateInput = {};
+  const data: ProjectUpdate = {};
 
   if (typeof body.published === "boolean") data.published = body.published;
   if (typeof body.title === "string") data.title = body.title;
@@ -51,12 +54,25 @@ export async function PATCH(
   }
 
   try {
-    const updated = await prisma.project.update({ where: { id }, data });
+    const { data: updated, error } = await supabase
+      .from("Project")
+      .update(data)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      if (isUniqueViolation(error, "slug")) {
+        return new Response("Slug already exists", { status: 409 });
+      }
+      console.error(error);
+      return new Response("Internal server error", { status: 500 });
+    }
+
+    if (!updated) return new Response("Not found", { status: 404 });
+
     return Response.json(updated);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      return new Response("Slug already exists", { status: 409 });
-    }
     console.error(error);
     return new Response("Internal server error", { status: 500 });
   }
@@ -68,22 +84,20 @@ export async function GET(
 ) {
   const forbidden = await requireAdmin();
   if (forbidden) return forbidden;
+  const supabase = getSupabaseAdminClient();
 
   const { id } = await params;
 
-  const project = await prisma.project.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      summary: true,
-      content: true,
-      published: true,
-      thumbnail: true,
-      createdAt: true,
-    },
-  });
+  const { data: project, error } = await supabase
+    .from("Project")
+    .select("id,title,slug,summary,content,published,thumbnail,createdAt")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to fetch project", error);
+    return new Response("Internal server error", { status: 500 });
+  }
 
   if (!project) return new Response("Not found", { status: 404 });
   return Response.json(project);
@@ -95,13 +109,25 @@ export async function DELETE(
 ) {
   const forbidden = await requireAdmin();
   if (forbidden) return forbidden;
+  const supabase = getSupabaseAdminClient();
 
   const { id } = await params;
 
-  try {
-    await prisma.project.delete({ where: { id } });
-    return new Response(null, { status: 204 });
-  } catch {
+  const { data: deleted, error } = await supabase
+    .from("Project")
+    .delete()
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Failed to delete project", error);
+    return new Response("Internal server error", { status: 500 });
+  }
+
+  if (!deleted) {
     return new Response("Not found", { status: 404 });
   }
+
+    return new Response(null, { status: 204 });
 }

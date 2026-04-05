@@ -1,7 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma"
+import { getSupabaseAdminClient } from "@/lib/supabase";
 import Link from "next/link";
 import { ArrowBigLeftDash } from "lucide-react";
 import { Metadata } from "next";
@@ -17,10 +17,14 @@ export async function generateMetadata({
 }: {
     params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
+    const supabase = getSupabaseAdminClient();
     const { slug } = await params;
-    const blog = await prisma.blog.findFirst({
-        where: { slug, published: true },
-    });
+    const { data: blog } = await supabase
+        .from("Blog")
+        .select("title,summary,content,thumbnail,createdAt")
+        .eq("slug", slug)
+        .eq("published", true)
+        .maybeSingle();
 
     if (!blog) {
         return { title: "Blog not found" };
@@ -36,7 +40,7 @@ export async function generateMetadata({
             description,
             images: blog.thumbnail ? [{ url: blog.thumbnail }] : [],
             type: "article",
-            publishedTime: blog.createdAt.toISOString(),
+            publishedTime: new Date(blog.createdAt).toISOString(),
         },
         twitter: {
             card: "summary_large_image",
@@ -48,14 +52,15 @@ export async function generateMetadata({
 }
 
 export default async function BlogDetailPage({ params }: BlogPageProps) {
+    const supabase = getSupabaseAdminClient();
     const { slug } = await params;
 
-    const blog = await prisma.blog.findFirst({
-        where: {
-            slug,
-            published: true,
-        },
-    });
+    const { data: blog } = await supabase
+        .from("Blog")
+        .select("*")
+        .eq("slug", slug)
+        .eq("published", true)
+        .maybeSingle();
 
     if (!blog) {
         notFound();

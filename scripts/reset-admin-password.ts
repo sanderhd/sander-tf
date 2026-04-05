@@ -1,13 +1,19 @@
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { getSupabaseAdminClient } from "../lib/supabase";
 
 async function resetAdminPassword() {
   try {
-    const admin = await prisma.user.findFirst({
-      where: { role: "ADMIN" },
-    });
+    const supabase = getSupabaseAdminClient();
+    const { data: admin, error: adminError } = await supabase
+      .from("User")
+      .select("id,email")
+      .eq("role", "ADMIN")
+      .limit(1)
+      .maybeSingle();
+
+    if (adminError) {
+      throw adminError;
+    }
 
     if (!admin) {
       console.log("❌ Geen admin user gevonden. Maak eerst een admin aan met:");
@@ -22,10 +28,14 @@ async function resetAdminPassword() {
     
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
-    await prisma.user.update({
-      where: { id: admin.id },
-      data: { passwordHash },
-    });
+    const { error: updateError } = await supabase
+      .from("User")
+      .update({ passwordHash })
+      .eq("id", admin.id);
+
+    if (updateError) {
+      throw updateError;
+    }
 
     console.log("✅ Admin password reset successfully!");
     console.log("   Email:", admin.email);
@@ -34,8 +44,6 @@ async function resetAdminPassword() {
     console.log("⚠️  Bewaar dit wachtwoord veilig!");
   } catch (error) {
     console.error("❌ Error resetting password:", error);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
