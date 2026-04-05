@@ -6,13 +6,16 @@ import { getSupabaseAdminClient } from "@/lib/supabase";
 const SESSION_COOKIE_NAME = "admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 
-export async function verifyAdminPassword(password: string): Promise<boolean> {
+export async function verifyAdminCredentials(
+  email: string,
+  password: string
+): Promise<boolean> {
   const supabase = getSupabaseAdminClient();
-  const { data: admin, error } = await supabase
-    .from("User")
+  const { data: profile, error } = await supabase
+    .from("profiles")
     .select("passwordHash")
+    .eq("email", email.toLowerCase().trim())
     .eq("role", "ADMIN")
-    .limit(1)
     .maybeSingle();
 
   if (error) {
@@ -20,9 +23,9 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
     return false;
   }
 
-  if (!admin) return false;
+  if (!profile) return false;
 
-  return bcrypt.compare(password, admin.passwordHash);
+  return bcrypt.compare(password, profile.passwordHash);
 }
 
 export async function createSession() {

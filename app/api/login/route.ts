@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminPassword, createSession } from "@/lib/auth";
-import { error } from "console";
+import { verifyAdminCredentials, createSession } from "@/lib/auth";
 
 async function verifyTurnstile(token: string, remoteip?: string) {
   const secret = process.env.TURNSTILE_SECRET_KEY;
@@ -24,13 +23,12 @@ async function verifyTurnstile(token: string, remoteip?: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { password, turnstileToken } = await request.json();
+    const { email, password, turnstileToken } = await request.json();
 
-    if (!password || !turnstileToken) {
-      return NextResponse.json(
-        error({ error: "Password and Turnstile token are required" }),
-        { status: 400 }
-      )
+    if (!email || !password || !turnstileToken) {
+      return NextResponse.json({
+        error: "Email, password and Turnstile token are required",
+      }, { status: 400 });
     }
 
     const ip = request.headers.get("x-forwarder-for")?.split(",")[0].trim();
@@ -42,9 +40,9 @@ export async function POST(request: NextRequest) {
       }, { status: 401 })
     }
 
-    const isValid = await verifyAdminPassword(password);
+    const isValid = await verifyAdminCredentials(email, password);
     if (!isValid) {
-      return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
     await createSession();
 

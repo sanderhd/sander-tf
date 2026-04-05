@@ -3,10 +3,16 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import AdminNav from "@/components/admin/AdminNav";
-import { FileText, FolderKanban, BarChart3 } from "lucide-react";
+import { FileText, FolderKanban, BarChart3, Users } from "lucide-react";
 
 export default function AdminDashboard() {
-    const quickActions = [
+    const quickActions: Array<{
+        href: string;
+        label: string;
+        icon: typeof FileText;
+        description: string;
+        disabled?: boolean;
+    }> = [
         { 
             href: "/admin/blogs", 
             label: "Manage Blogs", 
@@ -19,12 +25,17 @@ export default function AdminDashboard() {
             icon: FolderKanban,
             description: "Create and edit projects",
         },
+        {
+            href: "/admin/users",
+            label: "Manage Users",
+            icon: Users,
+            description: "Register users and assign roles",
+        },
         { 
             href: "/admin/analytics", 
             label: "View Analytics", 
             icon: BarChart3,
-            description: "Coming soon",
-            disabled: true
+            description: "Vercel traffic & performance"
         },
     ];
 

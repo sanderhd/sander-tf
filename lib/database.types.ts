@@ -1,28 +1,28 @@
-export type Role = "USER" | "ADMIN";
+export type ProfileRole = "USER" | "ADMIN";
 
 export type Database = {
   public: {
     Tables: {
-      User: {
+      profiles: {
         Row: {
           id: string;
           email: string;
           passwordHash: string;
-          role: Role;
+          role: ProfileRole;
           createdAt: string;
         };
         Insert: {
           id?: string;
           email: string;
           passwordHash: string;
-          role?: Role;
+          role?: ProfileRole;
           createdAt?: string;
         };
         Update: {
           id?: string;
           email?: string;
           passwordHash?: string;
-          role?: Role;
+          role?: ProfileRole;
           createdAt?: string;
         };
         Relationships: [];
@@ -101,7 +101,7 @@ export type Database = {
       [_ in never]: never;
     };
     Enums: {
-      Role: Role;
+      profile_role: ProfileRole;
     };
     CompositeTypes: {
       [_ in never]: never;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, BarChart3, FolderKanban, Leaf } from "lucide-react";
+import { FileText, BarChart3, FolderKanban, Users } from "lucide-react";
 
 export default function AdminNav() {
     const pathname = usePathname();
@@ -11,7 +11,8 @@ export default function AdminNav() {
         { href: "/admin", label: "Dashboard", icon: BarChart3 },
         { href: "/admin/blogs", label: "Blogs", icon: FileText },
         { href: "/admin/projects", label: "Projects", icon: FolderKanban },
-        { href: "/admin/analytics", label: "Analytics", icon: BarChart3, disabled: true }
+        { href: "/admin/users", label: "Users", icon: Users },
+        { href: "/admin/analytics", label: "Analytics", icon: BarChart3 }
     ];
 
     return (
@@ -23,23 +24,17 @@ export default function AdminNav() {
                 return (
                     <Link 
                         key={item.href}
-                        href={item.disabled ? "#" : item.href}
+                        href={item.href}
                         className={`
                             flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition
                             ${isActive 
                                 ? "bg-slate-900 text-white dark:bg-slate-700" 
                                 : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                             }
-                            ${item.disabled ? "cursor-not-allowed opacity-50" : ""}
                             `}
-                            aria-disabled={item.disabled}
-                            onClick={(e) => item.disabled && e.preventDefault()}
                     >
                         <Icon className="h-4 w-4" />
                         {item.label}
-                        {item.disabled && (
-                            <span className="text-xs opacity-60">(Soon)</span>
-                        )}
                     </Link>
                 );
             })}

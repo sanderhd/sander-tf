@@ -7,7 +7,10 @@ import { Turnstile } from "@marsidev/react-turnstile";
 
 export default function LoginPage() {
 	const router = useRouter();
+	const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+	const isTurnstileConfigured = turnstileSiteKey.length > 0;
 	const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -16,6 +19,12 @@ export default function LoginPage() {
 		e.preventDefault();
 		setLoading(true);
 		setError(null);
+
+		if (!isTurnstileConfigured) {
+			setError("Turnstile is not configured. Set NEXT_PUBLIC_TURNSTILE_SITE_KEY in your environment.");
+			setLoading(false);
+			return;
+		}
 
 		if(!turnstileToken) {
 			setError("Please complete the captcha.");
@@ -27,7 +36,7 @@ export default function LoginPage() {
 			const response = await fetch("/api/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ password, turnstileToken }),
+				body: JSON.stringify({ email, password, turnstileToken }),
 			});
 
 			const data = await response.json();
@@ -73,9 +82,24 @@ export default function LoginPage() {
 					className="rounded-3xl border border-slate-200/80 bg-white/80 p-6 shadow-2xl backdrop-blur-xl sm:p-8 dark:border-slate-800 dark:bg-slate-900/75"
 				>
 					<h1 className="font-mono text-3xl tracking-tight text-gray-900 dark:text-white">Login</h1>
-					<p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Enter your password to log in.</p>
+					<p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Log in with your admin email and password.</p>
 
 					<form onSubmit={onSubmit} className="mt-8 space-y-4">
+						<div>
+							<label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="email">
+								Email
+							</label>
+							<input
+								id="email"
+								type="email"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+								autoComplete="email"
+								required
+								className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition placeholder:text-slate-400 focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100"
+							/>
+						</div>
+
 						<div>
 							<label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300" htmlFor="password">
 								Password
@@ -85,6 +109,7 @@ export default function LoginPage() {
 								type="password"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
+								autoComplete="current-password"
 								required
 								className="w-full rounded-xl border border-slate-300 bg-white/90 px-4 py-3 text-slate-900 outline-none ring-blue-300 transition placeholder:text-slate-400 focus:ring-2 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100"
 							/>
@@ -93,23 +118,29 @@ export default function LoginPage() {
 						{error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
 						
 						<div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-							<Turnstile
-								className="mx-auto"
-								siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
-								options={{
-									size: "flexible",
-									theme: "auto",
-									appearance: "interaction-only",
-								}}
-								onSuccess={(token) => setTurnstileToken(token)}
-								onExpire={() => setTurnstileToken(null)}
-								onError={() => setTurnstileToken(null)}
-							/>
+							{isTurnstileConfigured ? (
+								<Turnstile
+									className="mx-auto"
+									siteKey={turnstileSiteKey}
+									options={{
+										size: "flexible",
+										theme: "auto",
+										appearance: "interaction-only",
+									}}
+									onSuccess={(token) => setTurnstileToken(token)}
+									onExpire={() => setTurnstileToken(null)}
+									onError={() => setTurnstileToken(null)}
+								/>
+							) : (
+								<p className="text-sm text-amber-700 dark:text-amber-400">
+									Turnstile site key ontbreekt. Zet NEXT_PUBLIC_TURNSTILE_SITE_KEY in je env.
+								</p>
+							)}
 						</div>
 					
 						<motion.button
 							type="submit"
-							disabled={loading}
+							disabled={loading || !isTurnstileConfigured}
 							whileHover={{ scale: 1.02 }}
 							whileTap={{ scale: 0.98 }}
 							className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-slate-900 px-5 py-2 text-sm font-medium text-white shadow-lg transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700"
